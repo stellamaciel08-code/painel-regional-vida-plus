@@ -458,16 +458,17 @@ tr:last-child td { border-bottom: none; }
     <canvas id="chart-annual" style="width:100%;display:block"></canvas>
   </div>
 
-  <!-- Chart 2: Pontualidade -->
+  <!-- Chart 2: Alavancagem -->
   <div class="card">
     <div class="card-hdr">
       <div>
-        <div class="card-title">Pontualidade de Pagamento — Mai/2025 a Jul/2026</div>
-        <div class="card-sub">% no prazo (eixo esq.) • Média de dias em atraso (eixo dir.)</div>
+        <div class="card-title">Alavancagem do Programa — Mai/2025 a Jul/2026</div>
+        <div class="card-sub">Regional Plus — vidas (eixo esq.) • Regional Vida — vidas (eixo dir.) • crescimento desde a reinauguração</div>
       </div>
       <div class="legend">
-        <div class="leg-item"><div class="leg-line" style="background:var(--ok)"></div>% No Prazo</div>
-        <div class="leg-item"><div class="leg-line" style="background:#D97706"></div>Média Dias Atraso</div>
+        <div class="leg-item"><div class="leg-line" style="background:var(--ok)"></div>Regional Plus</div>
+        <div class="leg-item"><div class="leg-line" style="background:var(--accent)"></div>Regional Vida</div>
+        <div class="leg-item"><div class="leg-line" style="background:var(--hl-soft);border-top:2px dashed var(--hl-soft);height:0;margin-top:1px"></div>Reinauguração Jun/25</div>
       </div>
     </div>
     <canvas id="chart-payment" style="width:100%;display:block"></canvas>
@@ -954,7 +955,7 @@ function drawAnnualChart() {
 }
 
 /* ═══════════════════════════════════════════════════════
-   CHART 2 — Pontualidade + Média Dias Atraso
+   CHART 2 — Alavancagem: Regional Plus vs Regional Vida
    ═══════════════════════════════════════════════════════ */
 function drawPaymentChart() {
   const canvas = document.getElementById('chart-payment');
@@ -968,35 +969,29 @@ function drawPaymentChart() {
 
   const isMobile = W < 500;
   const pad = isMobile
-    ? {top:24, right:48, bottom:40, left:46}
-    : {top:28, right:72, bottom:44, left:64};
+    ? {top:24, right:52, bottom:40, left:46}
+    : {top:28, right:76, bottom:44, left:60};
   const lbFont = isMobile ? '10px' : '11px';
   const cW = W - pad.left - pad.right;
   const cH = H - pad.top - pad.bottom;
-  const n = DATA.noPrazoPct.length;
+  const n = DATA.vidasPlus.length;
   const xP = i => pad.left + (i/(n-1))*cW;
 
-  const ptMin=50, ptMax=82;
-  const mdMin=8, mdMax=26;
-  const yPt = v => pad.top + cH - ((v-ptMin)/(ptMax-ptMin))*cH;
-  const yMd = v => pad.top + cH - ((v-mdMin)/(mdMax-mdMin))*cH;
+  // Dual Y: Plus (left, 70–280) / Vida (right, 710–950)
+  const vpMin=70,  vpMax=280;
+  const vbMin=710, vbMax=950;
+  const yVp = v => pad.top + cH - ((v-vpMin)/(vpMax-vpMin))*cH;
+  const yVb = v => pad.top + cH - ((v-vbMin)/(vbMax-vbMin))*cH;
 
-  const dark = isDark();
+  const dark   = isDark();
   const green  = cssVar('--ok');
-  const orange = '#D97706';
+  const teal   = cssVar('--accent');
+  const hlSoft = cssVar('--hl-soft');
   const border = cssVar('--border');
   const muted  = cssVar('--text3');
   const cardBg = cssVar('--card');
 
   ctx.fillStyle = cardBg; ctx.fillRect(0,0,W,H);
-
-  // 70% goal line
-  const goalY = yPt(70);
-  ctx.strokeStyle = green+'66'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
-  ctx.beginPath(); ctx.moveTo(pad.left, goalY); ctx.lineTo(pad.left+cW, goalY); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = green; ctx.font='9px system-ui'; ctx.textAlign='left';
-  ctx.fillText('meta 70%', pad.left+4, goalY-3);
 
   // grid
   ctx.strokeStyle = border; ctx.lineWidth=1; ctx.setLineDash([3,3]);
@@ -1005,6 +1000,17 @@ function drawPaymentChart() {
     ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+cW,y); ctx.stroke();
   }
   ctx.setLineDash([]);
+
+  // reinauguration mark (index 1 = Jun/25)
+  const reiX = xP(1);
+  ctx.strokeStyle = hlSoft; ctx.lineWidth=1.5; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(reiX, pad.top-4); ctx.lineTo(reiX, pad.top+cH); ctx.stroke();
+  ctx.setLineDash([]);
+  if (!isMobile) {
+    ctx.fillStyle=hlSoft; ctx.font='bold 10px system-ui'; ctx.textAlign='center';
+    ctx.fillText('Reinaug.', reiX, pad.top-18);
+    ctx.fillText('26/06/25', reiX, pad.top-7);
+  }
 
   // year separator (index 8 = Jan/26)
   const yrX = xP(8);
@@ -1019,18 +1025,16 @@ function drawPaymentChart() {
   // selected highlight
   const selX = xP(selectedMonth);
   const bW = cW/(n-1);
-  ctx.fillStyle = dark?'rgba(62,192,203,.1)':'rgba(0,131,143,.07)';
+  ctx.fillStyle = dark?'rgba(52,211,153,.08)':'rgba(11,110,79,.05)';
   ctx.fillRect(selX-bW*.4, pad.top, bW*.8, cH);
 
-  function drawLine(values, yFn, color, fillAlpha) {
-    if (fillAlpha) {
-      const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top+cH);
-      grad.addColorStop(0, color+'40'); grad.addColorStop(1, color+'00');
-      ctx.beginPath();
-      values.forEach((v,i)=>{const x=xP(i),y=yFn(v);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-      ctx.lineTo(xP(n-1),pad.top+cH); ctx.lineTo(xP(0),pad.top+cH); ctx.closePath();
-      ctx.fillStyle=grad; ctx.fill();
-    }
+  function drawSeries(values, yFn, color) {
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top+cH);
+    grad.addColorStop(0, color+'44'); grad.addColorStop(1, color+'00');
+    ctx.beginPath();
+    values.forEach((v,i)=>{const x=xP(i),y=yFn(v);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.lineTo(xP(n-1),pad.top+cH); ctx.lineTo(xP(0),pad.top+cH); ctx.closePath();
+    ctx.fillStyle=grad; ctx.fill();
     ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.lineJoin='round';
     values.forEach((v,i)=>{const x=xP(i),y=yFn(v);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
     ctx.stroke();
@@ -1042,45 +1046,50 @@ function drawPaymentChart() {
     });
   }
 
-  drawLine(DATA.noPrazoPct,  yPt, green,  true);
-  drawLine(DATA.mediaAtraso, yMd, orange, false);
+  drawSeries(DATA.vidasBase, yVb, teal);
+  drawSeries(DATA.vidasPlus, yVp, green);
 
   // selected labels
-  ctx.font='bold ' + (isMobile ? '10px' : '11px') + ' system-ui'; ctx.textAlign='center';
+  const vpVal = DATA.vidasPlus[selectedMonth];
+  const vbVal = DATA.vidasBase[selectedMonth];
+  const vpRef = DATA.vidasPlus[1];
+  const pct = ((vpVal-vpRef)/vpRef*100).toFixed(1).replace('.',',');
+  const sg = vpVal >= vpRef ? '+' : '';
+  ctx.font='bold '+(isMobile?'10px':'11px')+' system-ui'; ctx.textAlign='center';
   ctx.fillStyle=green;
-  ctx.fillText(fmtPct(DATA.noPrazoPct[selectedMonth])+' prazo', selX, Math.max(pad.top+14, yPt(DATA.noPrazoPct[selectedMonth])-12));
-  ctx.fillStyle=orange;
-  ctx.fillText(DATA.mediaAtraso[selectedMonth].toFixed(1).replace('.',',')+'d', selX, Math.min(H-pad.bottom-4, yMd(DATA.mediaAtraso[selectedMonth])+18));
+  ctx.fillText('Plus: '+vpVal+' ('+sg+pct+'%)', selX, Math.max(pad.top+14, yVp(vpVal)-14));
+  ctx.fillStyle=teal;
+  ctx.fillText('Vida: '+vbVal, selX, Math.max(pad.top+28, yVb(vbVal)-14));
 
   // x labels
   ctx.fillStyle=muted; ctx.font=lbFont+' system-ui';
   DATA.monthsShort.forEach((ms,i)=>{
-    if (isMobile && i % 3 !== 0) return;
+    if (isMobile && i%3!==0) return;
     ctx.textAlign='center'; ctx.fillText(ms,xP(i),H-10);
   });
 
-  // left Y (%)
+  // left Y (Plus)
   ctx.fillStyle=green; ctx.font=lbFont+' system-ui'; ctx.textAlign='right';
-  [55,60,65,70,75,80].forEach(v=>{
-    const y=yPt(v);
-    if(y>=pad.top&&y<=pad.top+cH) ctx.fillText(v+'%',pad.left-8,y+4);
+  [80,120,160,200,240].forEach(v=>{
+    const y=yVp(v);
+    if(y>=pad.top&&y<=pad.top+cH) ctx.fillText(v,pad.left-8,y+4);
   });
   if (!isMobile) {
-    ctx.save(); ctx.translate(12, pad.top+cH/2); ctx.rotate(-Math.PI/2);
+    ctx.save(); ctx.translate(12,pad.top+cH/2); ctx.rotate(-Math.PI/2);
     ctx.textAlign='center'; ctx.fillStyle=green; ctx.font='10px system-ui';
-    ctx.fillText('% No Prazo', 0, 0); ctx.restore();
+    ctx.fillText('Regional Plus',0,0); ctx.restore();
   }
 
-  // right Y (dias)
-  ctx.fillStyle=orange; ctx.textAlign='left'; ctx.font=lbFont+' system-ui';
-  [10,14,18,22].forEach(v=>{
-    const y=yMd(v);
-    if(y>=pad.top&&y<=pad.top+cH) ctx.fillText(v+'d', pad.left+cW+8, y+4);
+  // right Y (Vida)
+  ctx.fillStyle=teal; ctx.textAlign='left'; ctx.font=lbFont+' system-ui';
+  [730,770,810,850,890,930].forEach(v=>{
+    const y=yVb(v);
+    if(y>=pad.top&&y<=pad.top+cH) ctx.fillText(v,pad.left+cW+8,y+4);
   });
   if (!isMobile) {
-    ctx.save(); ctx.translate(W-10, pad.top+cH/2); ctx.rotate(Math.PI/2);
-    ctx.textAlign='center'; ctx.fillStyle=orange; ctx.font='10px system-ui';
-    ctx.fillText('Dias Atraso', 0, 0); ctx.restore();
+    ctx.save(); ctx.translate(W-12,pad.top+cH/2); ctx.rotate(Math.PI/2);
+    ctx.textAlign='center'; ctx.fillStyle=teal; ctx.font='10px system-ui';
+    ctx.fillText('Regional Vida',0,0); ctx.restore();
   }
 }
 
