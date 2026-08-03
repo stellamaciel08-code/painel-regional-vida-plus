@@ -85,6 +85,7 @@ a { color: inherit; text-decoration: none; }
 .month-bar {
   background: var(--primary); padding: 10px 28px; display: flex;
   align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  position: sticky; top: 0; z-index: 100; overscroll-behavior-x: contain;
 }
 .month-bar::-webkit-scrollbar { display: none; }
 .month-bar-label { font-size: 11px; color: rgba(255,255,255,.55); letter-spacing: .4px; text-transform: uppercase; white-space: nowrap; margin-right: 4px; }
@@ -102,12 +103,14 @@ a { color: inherit; text-decoration: none; }
 /* ── Container ── */
 .wrap { max-width: 1360px; margin: 0 auto; padding: 20px 24px 40px; }
 
-/* ── KPI grid (3 cols) ── */
+/* ── KPI grid ── */
 .kpi-grid {
   display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 14px; margin-bottom: 18px;
 }
+.kpi-4col { grid-template-columns: repeat(4, 1fr); }
 @media (max-width: 860px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px) { .kpi-4col { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 560px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
 
 .kpi {
@@ -126,7 +129,7 @@ a { color: inherit; text-decoration: none; }
 .kpi-delta.up   { background: var(--ok-bg); color: var(--ok); }
 .kpi-delta.down { background: var(--bad-bg); color: var(--bad); }
 .kpi-delta.neu  { background: var(--bg); color: var(--text3); }
-.kpi-spark { display: block; }
+.kpi-spark { display: block; width: 72px; height: 28px; }
 .kpi-sub { font-size: 10px; color: var(--text3); }
 .taxa-bar-wrap { background: var(--border); border-radius: 3px; height: 5px; margin-top: 4px; overflow: hidden; }
 .taxa-bar-fill { height: 100%; border-radius: 3px; transition: width .5s, background .5s; }
@@ -199,6 +202,60 @@ tr:last-child td { border-bottom: none; }
 .pill-neu  { background: var(--bg); color: var(--text3); }
 .yr-row td { border-top: 2px dashed var(--border); }
 .yr-row td:first-child { color: var(--text3); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+
+/* ── Mobile / Touch ─────────────────────────────────── */
+@media (max-width: 600px) {
+  .wrap { padding: 14px 12px 36px; }
+
+  /* Header */
+  .hdr { padding: 10px 14px; gap: 8px; }
+  .hdr-logo { font-size: 20px; }
+  .hdr-sub { font-size: 9px; letter-spacing: 0; }
+  .hdr-right { font-size: 10px; }
+  .hdr-right strong { font-size: 13px; }
+  .hdr-theme-btn { padding: 8px 10px; min-height: 40px; min-width: 40px; margin-left: 6px; }
+
+  /* Month bar: scroll-snap + touch-friendly */
+  .month-bar { padding: 4px 12px; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; }
+  .month-bar-label { display: none; }
+  .m-btn { min-height: 44px; padding: 0 14px; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; scroll-snap-align: start; }
+  .yr-sep { height: 24px; margin: 0 4px; }
+
+  /* KPI cards */
+  .kpi { padding: 12px; gap: 5px; }
+  .kpi-grid { gap: 10px; margin-bottom: 12px; }
+  .kpi-grid:not(.kpi-4col) > .kpi:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .kpi-label { font-size: 9px; }
+  .kpi-sub { font-size: 9px; }
+  .kpi-delta { font-size: 10px; padding: 2px 6px; }
+  .kpi-spark { width: 56px; height: 22px; }
+
+  /* Chart cards */
+  .card { padding: 14px; }
+  .card-hdr { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .card-sub { font-size: 10px; }
+  .legend { gap: 10px; margin-bottom: 8px; }
+
+  /* Segment bars */
+  .seg-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+  .seg-tabs { gap: 3px; }
+  .seg-tab { padding: 6px 9px; min-height: 36px; font-size: 10px; }
+  .bar-item { grid-template-columns: 88px 1fr 58px; gap: 6px; }
+  .bar-item-name { font-size: 10px; }
+
+  /* Insights */
+  .insight { padding: 14px; }
+  .insight-title { font-size: 12px; }
+  .insight-body { font-size: 11px; }
+
+  /* Section labels */
+  .sec-label { font-size: 11px; margin: 14px 0 8px; }
+
+  /* Table */
+  table { font-size: 11px; }
+  th { padding: 7px 6px; font-size: 9px; }
+  td { padding: 7px 6px; }
+}
 
 /* ── Footer ── */
 .footer {
@@ -286,7 +343,7 @@ tr:last-child td { border-bottom: none; }
   </div>
 
   <!-- KPIs linha 2: base + Regional Plus -->
-  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+  <div class="kpi-grid kpi-4col">
     <div class="kpi" id="kpi-cpfs">
       <span class="kpi-label">Contribuintes Únicos</span>
       <div class="kpi-row">
@@ -714,9 +771,10 @@ function drawSparkline(canvasId, values, colorVar, filled) {
   const el = document.getElementById(canvasId);
   if (!el) return;
   const dpr = window.devicePixelRatio || 1;
-  const W = 72, H = 28;
-  el.width = W * dpr; el.height = H * dpr;
-  el.style.width = W + 'px'; el.style.height = H + 'px';
+  const W = el.offsetWidth  || 72;
+  const H = el.offsetHeight || 28;
+  el.width  = W * dpr;
+  el.height = H * dpr;
   const ctx = el.getContext('2d');
   ctx.scale(dpr, dpr);
   const vals = values.filter(v => v !== null);
@@ -773,7 +831,11 @@ function drawAnnualChart() {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const pad = {top:36, right:80, bottom:48, left:64};
+  const isMobile = W < 500;
+  const pad = isMobile
+    ? {top:28, right:52, bottom:44, left:48}
+    : {top:36, right:80, bottom:48, left:64};
+  const lbFont = isMobile ? '10px' : '11px';
   const cW = W - pad.left - pad.right;
   const cH = H - pad.top - pad.bottom;
   const n = DATA.boletos.length;
@@ -807,17 +869,21 @@ function drawAnnualChart() {
   ctx.strokeStyle = hlSoft; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
   ctx.beginPath(); ctx.moveTo(reiX, pad.top-4); ctx.lineTo(reiX, pad.top+cH); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = hlSoft; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-  ctx.fillText('Reinaug.', reiX, pad.top-18);
-  ctx.fillText('26/06/25', reiX, pad.top-7);
+  if (!isMobile) {
+    ctx.fillStyle = hlSoft; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Reinaug.', reiX, pad.top-18);
+    ctx.fillText('26/06/25', reiX, pad.top-7);
+  }
 
   // year separator (index 8 = Jan/26)
   const yrX = xP(8);
   ctx.strokeStyle = border; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
   ctx.beginPath(); ctx.moveTo(yrX, pad.top); ctx.lineTo(yrX, pad.top+cH); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = muted; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-  ctx.fillText('2026', yrX, pad.top-8);
+  if (!isMobile) {
+    ctx.fillStyle = muted; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('2026', yrX, pad.top-8);
+  }
 
   // selected highlight
   const selX = xP(selectedMonth);
@@ -848,38 +914,43 @@ function drawAnnualChart() {
 
   // labels for selected
   const svX = xP(selectedMonth);
-  ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+  ctx.font = 'bold ' + (isMobile ? '10px' : '12px') + ' system-ui'; ctx.textAlign = 'center';
   ctx.fillStyle = teal;
   ctx.fillText(DATA.boletos[selectedMonth] + ' bol.', svX, Math.max(pad.top+14, yBo(DATA.boletos[selectedMonth])-14));
   ctx.fillStyle = coral;
-  ctx.fillText(fmtBRL(DATA.valorBanc[selectedMonth]), svX, Math.max(pad.top+30, yVl(DATA.valorBanc[selectedMonth])-14));
+  ctx.fillText(fmtBRL(DATA.valorBanc[selectedMonth]), svX, Math.max(pad.top+28, yVl(DATA.valorBanc[selectedMonth])-14));
 
   // x labels
-  ctx.fillStyle = muted; ctx.font = '11px system-ui';
+  ctx.fillStyle = muted; ctx.font = lbFont + ' system-ui';
   DATA.monthsShort.forEach((ms,i) => {
+    if (isMobile && i % 3 !== 0) return;
     ctx.textAlign = 'center';
     ctx.fillText(ms, xP(i), H-10);
   });
 
   // left Y (boletos)
-  ctx.fillStyle = teal; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
+  ctx.fillStyle = teal; ctx.font = lbFont + ' system-ui'; ctx.textAlign = 'right';
   [600,650,700,750,800,850].forEach(v => {
     const y = yBo(v);
     if (y>=pad.top && y<=pad.top+cH) ctx.fillText(v, pad.left-8, y+4);
   });
-  ctx.save(); ctx.translate(12, pad.top+cH/2); ctx.rotate(-Math.PI/2);
-  ctx.textAlign='center'; ctx.fillStyle=teal; ctx.font='10px system-ui';
-  ctx.fillText('Boletos Pagos', 0, 0); ctx.restore();
+  if (!isMobile) {
+    ctx.save(); ctx.translate(12, pad.top+cH/2); ctx.rotate(-Math.PI/2);
+    ctx.textAlign='center'; ctx.fillStyle=teal; ctx.font='10px system-ui';
+    ctx.fillText('Boletos Pagos', 0, 0); ctx.restore();
+  }
 
   // right Y (arrecadação)
-  ctx.fillStyle = coral; ctx.textAlign='left'; ctx.font='11px system-ui';
+  ctx.fillStyle = coral; ctx.textAlign='left'; ctx.font = lbFont + ' system-ui';
   [140,155,170,185,200,215].forEach(v => {
     const y = yVl(v*1000);
     if (y>=pad.top && y<=pad.top+cH) ctx.fillText('R$'+v+'k', pad.left+cW+8, y+4);
   });
-  ctx.save(); ctx.translate(W-10, pad.top+cH/2); ctx.rotate(Math.PI/2);
-  ctx.textAlign='center'; ctx.fillStyle=coral; ctx.font='10px system-ui';
-  ctx.fillText('Arrecadação', 0, 0); ctx.restore();
+  if (!isMobile) {
+    ctx.save(); ctx.translate(W-10, pad.top+cH/2); ctx.rotate(Math.PI/2);
+    ctx.textAlign='center'; ctx.fillStyle=coral; ctx.font='10px system-ui';
+    ctx.fillText('Arrecadação', 0, 0); ctx.restore();
+  }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -895,7 +966,11 @@ function drawPaymentChart() {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const pad = {top:28, right:72, bottom:44, left:64};
+  const isMobile = W < 500;
+  const pad = isMobile
+    ? {top:24, right:48, bottom:40, left:46}
+    : {top:28, right:72, bottom:44, left:64};
+  const lbFont = isMobile ? '10px' : '11px';
   const cW = W - pad.left - pad.right;
   const cH = H - pad.top - pad.bottom;
   const n = DATA.noPrazoPct.length;
@@ -936,8 +1011,10 @@ function drawPaymentChart() {
   ctx.strokeStyle = border; ctx.lineWidth=1; ctx.setLineDash([4,4]);
   ctx.beginPath(); ctx.moveTo(yrX,pad.top); ctx.lineTo(yrX,pad.top+cH); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle=muted; ctx.font='10px system-ui'; ctx.textAlign='center';
-  ctx.fillText('2026', yrX, pad.top-8);
+  if (!isMobile) {
+    ctx.fillStyle=muted; ctx.font='10px system-ui'; ctx.textAlign='center';
+    ctx.fillText('2026', yrX, pad.top-8);
+  }
 
   // selected highlight
   const selX = xP(selectedMonth);
@@ -969,35 +1046,42 @@ function drawPaymentChart() {
   drawLine(DATA.mediaAtraso, yMd, orange, false);
 
   // selected labels
-  ctx.font='bold 11px system-ui'; ctx.textAlign='center';
+  ctx.font='bold ' + (isMobile ? '10px' : '11px') + ' system-ui'; ctx.textAlign='center';
   ctx.fillStyle=green;
   ctx.fillText(fmtPct(DATA.noPrazoPct[selectedMonth])+' prazo', selX, Math.max(pad.top+14, yPt(DATA.noPrazoPct[selectedMonth])-12));
   ctx.fillStyle=orange;
   ctx.fillText(DATA.mediaAtraso[selectedMonth].toFixed(1).replace('.',',')+'d', selX, Math.min(H-pad.bottom-4, yMd(DATA.mediaAtraso[selectedMonth])+18));
 
   // x labels
-  ctx.fillStyle=muted; ctx.font='11px system-ui';
-  DATA.monthsShort.forEach((ms,i)=>{ ctx.textAlign='center'; ctx.fillText(ms,xP(i),H-10); });
+  ctx.fillStyle=muted; ctx.font=lbFont+' system-ui';
+  DATA.monthsShort.forEach((ms,i)=>{
+    if (isMobile && i % 3 !== 0) return;
+    ctx.textAlign='center'; ctx.fillText(ms,xP(i),H-10);
+  });
 
   // left Y (%)
-  ctx.fillStyle=green; ctx.font='11px system-ui'; ctx.textAlign='right';
+  ctx.fillStyle=green; ctx.font=lbFont+' system-ui'; ctx.textAlign='right';
   [55,60,65,70,75,80].forEach(v=>{
     const y=yPt(v);
     if(y>=pad.top&&y<=pad.top+cH) ctx.fillText(v+'%',pad.left-8,y+4);
   });
-  ctx.save(); ctx.translate(12, pad.top+cH/2); ctx.rotate(-Math.PI/2);
-  ctx.textAlign='center'; ctx.fillStyle=green; ctx.font='10px system-ui';
-  ctx.fillText('% No Prazo', 0, 0); ctx.restore();
+  if (!isMobile) {
+    ctx.save(); ctx.translate(12, pad.top+cH/2); ctx.rotate(-Math.PI/2);
+    ctx.textAlign='center'; ctx.fillStyle=green; ctx.font='10px system-ui';
+    ctx.fillText('% No Prazo', 0, 0); ctx.restore();
+  }
 
   // right Y (dias)
-  ctx.fillStyle=orange; ctx.textAlign='left'; ctx.font='11px system-ui';
+  ctx.fillStyle=orange; ctx.textAlign='left'; ctx.font=lbFont+' system-ui';
   [10,14,18,22].forEach(v=>{
     const y=yMd(v);
     if(y>=pad.top&&y<=pad.top+cH) ctx.fillText(v+'d', pad.left+cW+8, y+4);
   });
-  ctx.save(); ctx.translate(W-10, pad.top+cH/2); ctx.rotate(Math.PI/2);
-  ctx.textAlign='center'; ctx.fillStyle=orange; ctx.font='10px system-ui';
-  ctx.fillText('Dias Atraso', 0, 0); ctx.restore();
+  if (!isMobile) {
+    ctx.save(); ctx.translate(W-10, pad.top+cH/2); ctx.rotate(Math.PI/2);
+    ctx.textAlign='center'; ctx.fillStyle=orange; ctx.font='10px system-ui';
+    ctx.fillText('Dias Atraso', 0, 0); ctx.restore();
+  }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1105,6 +1189,8 @@ function selectMonth(i) {
   drawAnnualChart();
   drawPaymentChart();
   buildTable();
+  const btn = document.querySelector('.m-btn[data-idx="' + i + '"]');
+  if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
 
 function toggleTheme() {
