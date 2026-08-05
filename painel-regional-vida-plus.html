@@ -307,7 +307,7 @@ tr:last-child td { border-bottom: none; }
 <main class="wrap">
 
   <!-- KPIs linha 1: financeiro -->
-  <div class="kpi-grid kpi-5col">
+  <div class="kpi-grid kpi-4col">
     <div class="kpi hl" id="kpi-valor">
       <span class="kpi-label">Arrecadação Bancária</span>
       <div class="kpi-row">
@@ -344,18 +344,6 @@ tr:last-child td { border-bottom: none; }
       </div>
     </div>
 
-    <div class="kpi" id="kpi-boletos">
-      <span class="kpi-label">Boletos Pagos</span>
-      <div class="kpi-row">
-        <span class="kpi-value" id="kv-boletos">790</span>
-        <canvas class="kpi-spark" id="sp-boletos" width="72" height="28"></canvas>
-      </div>
-      <div class="kpi-row">
-        <span class="kpi-delta" id="kd-boletos">—</span>
-        <span class="kpi-sub">vs. mês ant.</span>
-      </div>
-    </div>
-
     <div class="kpi" id="kpi-ticket">
       <span class="kpi-label">Ticket Médio / Boleto</span>
       <div class="kpi-row">
@@ -370,7 +358,7 @@ tr:last-child td { border-bottom: none; }
   </div>
 
   <!-- KPIs linha 2: base + Regional Plus -->
-  <div class="kpi-grid kpi-4col">
+  <div class="kpi-grid kpi-5col">
     <div class="kpi" id="kpi-cpfs">
       <span class="kpi-label">Contribuintes Únicos</span>
       <div class="kpi-row">
@@ -380,6 +368,18 @@ tr:last-child td { border-bottom: none; }
       <div class="kpi-row">
         <span class="kpi-delta" id="kd-cpfs">—</span>
         <span class="kpi-sub">CPFs distintos</span>
+      </div>
+    </div>
+
+    <div class="kpi" id="kpi-boletos">
+      <span class="kpi-label">Boletos Pagos</span>
+      <div class="kpi-row">
+        <span class="kpi-value" id="kv-boletos">790</span>
+        <canvas class="kpi-spark" id="sp-boletos" width="72" height="28"></canvas>
+      </div>
+      <div class="kpi-row">
+        <span class="kpi-delta" id="kd-boletos">—</span>
+        <span class="kpi-sub">vs. mês ant.</span>
       </div>
     </div>
 
