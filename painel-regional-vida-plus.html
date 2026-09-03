@@ -301,7 +301,8 @@ tr:last-child td { border-bottom: none; }
   <button class="m-btn"         data-idx="11" onclick="selectMonth(11)">Abr/26</button>
   <button class="m-btn"         data-idx="12" onclick="selectMonth(12)">Mai/26</button>
   <button class="m-btn"         data-idx="13" onclick="selectMonth(13)">Jun/26</button>
-  <button class="m-btn active"  data-idx="14" onclick="selectMonth(14)">Jul/26</button>
+  <button class="m-btn"         data-idx="14" onclick="selectMonth(14)">Jul/26</button>
+  <button class="m-btn active"  data-idx="15" onclick="selectMonth(15)">Ago/26</button>
 </div>
 
 <main class="wrap">
@@ -605,20 +606,20 @@ tr:last-child td { border-bottom: none; }
    ═══════════════════════════════════════════════════════ */
 const DATA = {
   months:     ['Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro',
-               'Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho'],
+               'Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto'],
   monthsShort:['Mai/25','Jun/25','Jul/25','Ago/25','Set/25','Out/25','Nov/25','Dez/25',
-               'Jan/26','Fev/26','Mar/26','Abr/26','Mai/26','Jun/26','Jul/26'],
-  anos:       [2025,2025,2025,2025,2025,2025,2025,2025,2026,2026,2026,2026,2026,2026,2026],
+               'Jan/26','Fev/26','Mar/26','Abr/26','Mai/26','Jun/26','Jul/26','Ago/26'],
+  anos:       [2025,2025,2025,2025,2025,2025,2025,2025,2026,2026,2026,2026,2026,2026,2026,2026],
 
-  boletos:    [797,770,801,773,747,795,731,777,784,768,771,772,767,770,790],
-  cpfsUnicos: [720,706,725,715,703,732,698,708,713,702,713,714,710,696,718],
+  boletos:    [797,770,801,773,747,795,731,777,784,768,771,772,767,770,790,749],
+  cpfsUnicos: [720,706,725,715,703,732,698,708,713,702,713,714,710,696,718,683],
   valorBanc:  [155074.63,158999.44,171254.40,163073.45,159374.90,173185.00,164239.05,169338.65,
-               173323.00,171001.95,169275.30,173686.00,172361.00,190472.70,199091.35],
-  noPrazoPct: [63.6,76.0,72.2,65.7,75.1,70.2,75.2,73.7,62.8,70.7,70.3,71.2,60.8,71.3,69.4],
-  emAtrasoPct:[36.4,24.0,27.8,34.3,24.9,29.8,24.8,26.3,37.2,29.3,29.7,28.8,39.2,28.7,30.6],
-  mediaAtraso:[16.0,16.5,13.8,11.4,17.8,15.8,19.9,21.7,17.0,19.6,17.8,22.4,15.0,19.2,18.0],
-  vidasPlus:  [88,102,127,132,140,148,155,162,164,170,183,193,216,229,251],
-  vidasBase:  [734,757,768,771,774,780,788,792,796,801,802,814,851,876,886],
+               173323.00,171001.95,169275.30,173686.00,172361.00,190472.70,199091.35,185310.20],
+  noPrazoPct: [63.6,76.0,72.2,65.7,75.1,70.2,75.2,73.7,62.8,70.7,70.3,71.2,60.8,71.3,69.4,69.4],
+  emAtrasoPct:[36.4,24.0,27.8,34.3,24.9,29.8,24.8,26.3,37.2,29.3,29.7,28.8,39.2,28.7,30.6,30.6],
+  mediaAtraso:[16.0,16.5,13.8,11.4,17.8,15.8,19.9,21.7,17.0,19.6,17.8,22.4,15.0,19.2,18.0,18.0],
+  vidasPlus:  [88,102,127,132,140,148,155,162,164,170,183,193,216,229,251,251],
+  vidasBase:  [734,757,768,771,774,780,788,792,796,801,802,814,851,876,886,886],
 
   planos: {
     labels: ['Apto. Individual','Apto. 2 Pessoas','Enf. 2 Pessoas','Enf. 3 Pessoas','Enf. 4 Pessoas','Enf. Acima 4'],
@@ -642,7 +643,7 @@ const DATA = {
   }
 };
 
-let selectedMonth = 14;
+let selectedMonth = 15;
 let planoMonth = 5;
 let faixaMonth = 5;
 
