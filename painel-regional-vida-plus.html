@@ -318,7 +318,7 @@ tr:last-child td { border-bottom: none; }
 <main class="wrap">
 
   <!-- KPIs linha 1: financeiro -->
-  <div class="kpi-grid kpi-4col">
+  <div class="kpi-grid kpi-5col">
     <div class="kpi hl" id="kpi-valor">
       <span class="kpi-label">Arrecadação Bancária</span>
       <div class="kpi-row">
@@ -364,6 +364,17 @@ tr:last-child td { border-bottom: none; }
       <div class="kpi-row">
         <span class="kpi-delta up" id="kd-ticket">+22,1%</span>
         <span class="kpi-sub">vs. Jun/25</span>
+      </div>
+    </div>
+
+    <div class="kpi" id="kpi-total12">
+      <span class="kpi-label">Faturamento Total (12m)</span>
+      <div class="kpi-row">
+        <span class="kpi-value" id="kv-total12" style="font-size:14px">—</span>
+      </div>
+      <div class="kpi-row">
+        <span class="kpi-delta" id="kd-total12">—</span>
+        <span class="kpi-sub" id="ks-total12">vs. per. anterior</span>
       </div>
     </div>
   </div>
@@ -730,6 +741,19 @@ function updateKPIs() {
   document.getElementById('kv-media12').textContent = fmtBRL(avg12);
   setDelta('kd-media12', avg12D, sign(avg12D) + avg12D.toFixed(1).replace('.',',') + '%');
   document.getElementById('ks-media12').textContent = DATA.monthsShort[s12] + ' – ' + DATA.monthsShort[m];
+
+  // Faturamento total 12 meses
+  const sum12  = avg12 * n12;
+  const psum12 = (pavg12 && pn12 >= n12) ? pavg12 * pn12 : null;
+  const sum12D = psum12 ? delta(sum12, psum12) : null;
+  document.getElementById('kv-total12').textContent = fmtBRL(sum12);
+  if (sum12D !== null) {
+    setDelta('kd-total12', sum12D, sign(sum12D) + sum12D.toFixed(1).replace('.',',') + '%');
+  } else {
+    const el12 = document.getElementById('kd-total12');
+    el12.textContent = n12 + ' meses acum.'; el12.className = 'kpi-delta';
+  }
+  document.getElementById('ks-total12').textContent = DATA.monthsShort[s12] + ' – ' + DATA.monthsShort[m];
 
   // Boletos
   const bo = DATA.boletos[m], boP = p !== null ? DATA.boletos[p] : null;
