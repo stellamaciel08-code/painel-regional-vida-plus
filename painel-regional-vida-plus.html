@@ -927,7 +927,7 @@ tr:last-child td { border-bottom: none; }
       <div class="kpi-sub" id="rdet-12"></div>
     </div>
     <div class="kpi" id="res-avg-ano">
-      <span class="kpi-label" id="rl-ano">Saldo médio · anual</span>
+      <span class="kpi-label">Resultado líquido anual (12M)</span>
       <div class="kpi-row">
         <span class="kpi-value" id="rv-ano" style="font-size:16px">—</span>
         <canvas class="kpi-spark" id="rsp-ano" width="72" height="28"></canvas>
@@ -939,7 +939,7 @@ tr:last-child td { border-bottom: none; }
       <div class="kpi-sub" id="rdet-ano"></div>
     </div>
   </div>
-  <div class="kpi-sub" style="margin:-6px 0 18px">Médias mensais de receitas − despesas lançadas. Variação vs. período anterior de mesmo tamanho (anual: vs. média do ano anterior). Mai/25 não tem despesas lançadas (extratos começam em Jun/25).</div>
+  <div class="kpi-sub" style="margin:-6px 0 18px">Médias mensais de receitas − despesas lançadas, com variação vs. período anterior de mesmo tamanho. Resultado líquido anual = receitas − despesas dos últimos 12 meses. Mai/25 não tem despesas lançadas (extratos começam em Jun/25).</div>
 
   <!-- Charts row -->
   <div class="res-charts-row">
@@ -2008,12 +2008,27 @@ function updateResAvgCards(despByMonth) {
     fill(key, cur, prev, rng(s, m), s, m);
   });
 
-  const yr = DATA.anos[m];
-  const sY = DATA.anos.indexOf(yr);
-  const pYidx = DATA.anos.map((a, i) => a === yr - 1 ? i : -1).filter(i => i >= 0);
-  const prevY = pYidx.length ? stats(pYidx[0], pYidx[pYidx.length - 1]) : null;
-  document.getElementById('rl-ano').textContent = 'Saldo médio · anual (' + yr + ')';
-  fill('ano', stats(sY, m), prevY, rng(sY, m), sY, m);
+  // Resultado líquido anual (12M): receitas totais − despesas totais
+  const n12 = Math.min(12, m + 1), s12 = m - n12 + 1;
+  const cur = stats(s12, m);
+  const totRec = cur.rec * n12, totDesp = cur.desp * n12, liquido = totRec - totDesp;
+  const hasPrev = s12 - 12 >= 0;
+  const prevLiq = hasPrev ? stats(s12 - 12, s12 - 1).sal * 12 : null;
+  const vEl = document.getElementById('rv-ano');
+  vEl.textContent = signed(liquido);
+  vEl.style.color = liquido >= 0 ? 'var(--ok)' : 'var(--bad)';
+  document.getElementById('res-avg-ano').className = 'kpi ' + (liquido >= 0 ? 'ok' : 'bad');
+  if (prevLiq !== null) {
+    const d = delta(liquido, prevLiq);
+    setDelta('rd-ano', d, sign(d) + d.toFixed(1).replace('.', ',') + '%');
+  } else {
+    const dEl = document.getElementById('rd-ano');
+    dEl.textContent = n12 + ' meses acum.'; dEl.className = 'kpi-delta';
+  }
+  document.getElementById('rs-ano').textContent = rng(s12, m);
+  document.getElementById('rdet-ano').textContent = 'Receitas ' + fmtBRL(totRec) + ' − Despesas ' + fmtBRL(totDesp);
+  const serie = saldos.slice(s12, m + 1);
+  setTimeout(() => drawSparkline('rsp-ano', serie, liquido >= 0 ? '--ok' : '--bad', false), 60);
 }
 
 function updateResultado() {
