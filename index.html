@@ -375,6 +375,8 @@ tr:last-child td { border-bottom: none; }
 .bal-kpi.saldo-pos { border-top-color: var(--ok); }
 .bal-kpi.saldo-neg { border-top-color: var(--bad); }
 .bal-kpi.pct       { border-top-color: var(--accent); }
+.res-avg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+@media (max-width: 760px) { .res-avg-grid { grid-template-columns: 1fr; } }
 .bal-kpi-label { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--text3); font-weight: 700; margin-bottom: 8px; }
 .bal-kpi-value { font-size: 20px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
 .bal-kpi-sub { font-size: 10px; color: var(--text3); }
@@ -897,6 +899,47 @@ tr:last-child td { border-bottom: none; }
       <div class="bal-kpi-sub">Comprometimento da receita</div>
     </div>
   </div>
+
+  <!-- Médias do saldo: 6 meses, 12 meses e anual -->
+  <div class="res-avg-grid">
+    <div class="kpi" id="res-avg-6">
+      <span class="kpi-label">Saldo médio · últ. 6 meses</span>
+      <div class="kpi-row">
+        <span class="kpi-value" id="rv-6" style="font-size:16px">—</span>
+        <canvas class="kpi-spark" id="rsp-6" width="72" height="28"></canvas>
+      </div>
+      <div class="kpi-row">
+        <span class="kpi-delta" id="rd-6">—</span>
+        <span class="kpi-sub" id="rs-6"></span>
+      </div>
+      <div class="kpi-sub" id="rdet-6"></div>
+    </div>
+    <div class="kpi" id="res-avg-12">
+      <span class="kpi-label">Saldo médio · últ. 12 meses</span>
+      <div class="kpi-row">
+        <span class="kpi-value" id="rv-12" style="font-size:16px">—</span>
+        <canvas class="kpi-spark" id="rsp-12" width="72" height="28"></canvas>
+      </div>
+      <div class="kpi-row">
+        <span class="kpi-delta" id="rd-12">—</span>
+        <span class="kpi-sub" id="rs-12"></span>
+      </div>
+      <div class="kpi-sub" id="rdet-12"></div>
+    </div>
+    <div class="kpi" id="res-avg-ano">
+      <span class="kpi-label" id="rl-ano">Saldo médio · anual</span>
+      <div class="kpi-row">
+        <span class="kpi-value" id="rv-ano" style="font-size:16px">—</span>
+        <canvas class="kpi-spark" id="rsp-ano" width="72" height="28"></canvas>
+      </div>
+      <div class="kpi-row">
+        <span class="kpi-delta" id="rd-ano">—</span>
+        <span class="kpi-sub" id="rs-ano"></span>
+      </div>
+      <div class="kpi-sub" id="rdet-ano"></div>
+    </div>
+  </div>
+  <div class="kpi-sub" style="margin:-6px 0 18px">Médias mensais de receitas − despesas lançadas. Variação vs. período anterior de mesmo tamanho (anual: vs. média do ano anterior). Mai/25 não tem despesas lançadas (extratos começam em Jun/25).</div>
 
   <!-- Charts row -->
   <div class="res-charts-row">
@@ -1926,6 +1969,53 @@ function getExpensesByCategory(monthIdx) {
   return byCat;
 }
 
+function updateResAvgCards(despByMonth) {
+  const m = selectedMonth;
+  const rec = DATA.valorBanc;
+  const saldos = rec.map((v, i) => v - despByMonth[i]);
+  const stats = (s, e) => {
+    const n = e - s + 1;
+    let r = 0, d = 0;
+    for (let i = s; i <= e; i++) { r += rec[i]; d += despByMonth[i]; }
+    return { n, rec: r / n, desp: d / n, sal: (r - d) / n };
+  };
+  const rng = (s, e) => DATA.monthsShort[s] + ' – ' + DATA.monthsShort[e];
+  const signed = v => (v < 0 ? '− ' : '') + fmtBRL(Math.abs(v));
+
+  function fill(key, cur, prev, rangeTxt, sparkS, sparkE) {
+    const vEl = document.getElementById('rv-' + key);
+    vEl.textContent = signed(cur.sal);
+    vEl.style.color = cur.sal >= 0 ? 'var(--ok)' : 'var(--bad)';
+    document.getElementById('res-avg-' + key).className = 'kpi ' + (cur.sal >= 0 ? 'ok' : 'bad');
+    const dEl = document.getElementById('rd-' + key);
+    if (prev) {
+      const d = delta(cur.sal, prev.sal);
+      setDelta('rd-' + key, d, sign(d) + d.toFixed(1).replace('.', ',') + '%');
+    } else {
+      dEl.textContent = '—'; dEl.className = 'kpi-delta neu';
+    }
+    document.getElementById('rs-' + key).textContent = rangeTxt;
+    document.getElementById('rdet-' + key).textContent =
+      'Receita média ' + fmtBRL(cur.rec) + ' · Despesa média ' + fmtBRL(cur.desp);
+    const series = saldos.slice(sparkS, sparkE + 1);
+    setTimeout(() => drawSparkline('rsp-' + key, series, cur.sal >= 0 ? '--ok' : '--bad', false), 60);
+  }
+
+  [[6, '6'], [12, '12']].forEach(([w, key]) => {
+    const n = Math.min(w, m + 1), s = m - n + 1;
+    const cur = stats(s, m);
+    const prev = s > 0 ? stats(Math.max(0, s - n), s - 1) : null;
+    fill(key, cur, prev, rng(s, m), s, m);
+  });
+
+  const yr = DATA.anos[m];
+  const sY = DATA.anos.indexOf(yr);
+  const pYidx = DATA.anos.map((a, i) => a === yr - 1 ? i : -1).filter(i => i >= 0);
+  const prevY = pYidx.length ? stats(pYidx[0], pYidx[pYidx.length - 1]) : null;
+  document.getElementById('rl-ano').textContent = 'Saldo médio · anual (' + yr + ')';
+  fill('ano', stats(sY, m), prevY, rng(sY, m), sY, m);
+}
+
 function updateResultado() {
   const m = selectedMonth;
   const { byMonth, countByMonth } = getExpensesByMonth();
@@ -1946,6 +2036,8 @@ function updateResultado() {
   const pctEl = document.getElementById('res-pct');
   pctEl.textContent = receita > 0 ? fmtPct(pct) : '—';
   pctEl.style.color = pct > 80 ? 'var(--bad)' : pct > 50 ? '#D97706' : 'var(--ok)';
+
+  updateResAvgCards(byMonth);
 
   // Tabela resumo
   const tbody = document.getElementById('res-table-body');
